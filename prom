@@ -1,0 +1,23 @@
+FROM ubuntu
+
+ARG ARC=amd64
+ARG VERSION=*.*
+ARG OS=linux
+ARG PROMETHEUS_VERSION=2.49.1
+
+
+LABEL maintainer="elen_anahit"
+
+RUN apt update && apt install -y tar
+ADD https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.${OS}-${ARC}.tar.gz .
+RUN tar xvfz /prometheus-${PROMETHEUS_VERSION}.$OS-${ARC}.tar.gz -C ./
+RUN cp /prometheus-${PROMETHEUS_VERSION}.${OS}-${ARC}/prometheus /usr/local/bin
+RUN cp /prometheus-${PROMETHEUS_VERSION}.${OS}-${ARC}/promtool /usr/local/bin
+
+EXPOSE 9090
+
+VOLUME [ "/prometheus" ]
+
+ENTRYPOINT [ "/usr/local/bin/prometheus" ]
+CMD [ "--config.file=/etc/prometheus/prometheus.yml" ]
+
