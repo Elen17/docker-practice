@@ -1,0 +1,41 @@
+ARG UBUNTU_VERSION='latest'
+
+FROM ubuntu:${UBUNTU_VERSION}
+
+LABEL owner='elen_anahit'
+LABEL description='Node_exporter Dockerfile'
+LABEL version='v1'
+
+
+ARG OS=linux
+ARG ARC=amd64
+ARG NODE_VERSION=1.7.0 
+
+ARG FILE_NAME=node_exporter-${NODE_VERSION}.${OS}-${ARC}
+ARG NODE_EXORTER_URL=https://github.com/prometheus/node_exporter/releases/download/v${NODE_VERSION}/${FILE_NAME}.tar.gz
+
+ARG GID='123' \
+    UID='123'
+
+ADD  ${NODE_EXORTER_URL} .
+
+RUN  tar xvfz  ${FILE_NAME}.tar.gz -C .
+
+
+RUN  groupadd -r -g ${GID} node_exporter && \
+     useradd -r -u ${UID} -g  node_exporter --shell /bin/false node_exporter && \
+     chown node_exporter:node_exporter ./${FILE_NAME} && \
+     chmod +x ./${FILE_NAME}
+
+RUN mv ${FILE_NAME} /node_exporter
+
+RUN  rm -rf /var/lib/apt/lists/* ${FILE_NAME}.tar.gz 
+
+
+WORKDIR /node_exporter
+
+USER node_exporter
+
+EXPOSE 9100
+
+CMD ["./node_exporter"]
