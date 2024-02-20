@@ -1,0 +1,46 @@
+ARG UBUNTU_VERSION='latest'
+
+FROM ubuntu:${UBUNTU_VERSION}
+
+LABEL owner='elen_anahit'
+LABEL description='Prometheus Dockerfile'
+LABEL version='v1'
+
+ARG OS=linux
+ARG ARC=amd64
+ARG PROMETHEUS_VERSION=2.49.1
+
+ARG FOLDER_NAME=prometheus-${PROMETHEUS_VERSION}.${OS}-${ARC}
+ARG URL=https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/${FOLDER_NAME}.tar.gz
+ARG GID='124' \
+    UID='124'
+
+RUN apt update && apt install -y tar
+
+ADD  ${URL} .
+
+RUN tar xvfz /${FOLDER_NAME}.tar.gz -C ./
+
+RUN  groupadd -r -g ${GID} prometheus && \
+     useradd -r -u ${UID} -g  prometheus --shell /bin/false prometheus && \
+     chown -R prometheus:prometheus ./${FOLDER_NAME} && \
+     chmod +x ./${FOLDER_NAME}
+
+RUN mkdir -p /etc/prometheus     
+
+RUN cp /${FOLDER_NAME}/prometheus /usr/bin/prometheus && \
+    cp /${FOLDER_NAME}/promtool /usr/bin/promtool
+
+RUN rm -rf ${FOLDER_NAME}*
+
+WORKDIR /prometheus
+
+RUN ln -s /etc/prometheus/ && \
+    chown -R prometheus:prometheus /etc/prometheus /prometheus
+
+USER       prometheus
+EXPOSE     9090
+VOLUME     [ "/prometheus" ]
+
+ENTRYPOINT [ "/bin/prometheus" ]
+CMD        [ "--config.file=/etc/prometheus/prometheus.yml" ]
